@@ -211,6 +211,43 @@
       .simdata{font-size:13.5px;line-height:1.55;margin:0;padding-left:18px}
       .simdata li{margin-bottom:5px}
       .sim-note{font-size:12.5px;color:var(--ink-soft);margin-top:9px;line-height:1.45}
+
+      /* ---------- Editor del flujo ---------- */
+      .wide-btn{width:100%}
+      .diff-line{font-size:13px;margin:10px 0 0;color:var(--ink-soft);line-height:1.45}
+      .diff-line.warn{color:var(--warn);font-weight:600}
+      .diff-list{font-size:12.5px;color:var(--ink-soft);margin:6px 0 0;padding-left:18px;line-height:1.5}
+      .editor-wrap{margin-top:12px}
+      .ed-group{
+        border:1px solid var(--panel-border);border-radius:12px;
+        padding:6px 12px 10px;margin-bottom:10px;
+      }
+      .ed-group summary{font-weight:700;font-size:14.5px;cursor:pointer;padding:6px 0}
+      .ed-field{margin:9px 0}
+      .ed-field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:4px}
+      .ed-field input[type="text"],.ed-field input[type="number"],.ed-field textarea,.ed-field select,
+      .import-box textarea{
+        width:100%;padding:8px 10px;border:1px solid var(--panel-border);border-radius:8px;
+        background:var(--input-bg);color:var(--ink);font:inherit;font-size:13.5px;
+      }
+      .ed-field textarea{min-height:54px;resize:vertical;line-height:1.4}
+      .ed-item{border:1px dashed var(--panel-border);border-radius:10px;padding:8px 10px;margin:8px 0}
+      .ed-item-head{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:13.5px;gap:8px}
+      .btn-ghost{
+        background:transparent;border:1.5px solid var(--accent);color:var(--quick-ink);
+        border-radius:999px;padding:7px 13px;font-size:13px;font-weight:550;cursor:pointer;
+      }
+      .btn-ghost.small{padding:4px 10px;font-size:12px}
+      .btn-ghost.danger{border-color:var(--danger);color:var(--danger)}
+      .btn-ghost.armed{background:var(--danger);border-color:var(--danger);color:#fff}
+      .editor-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+      .editor-msg{font-size:13px;min-height:18px;margin:8px 0 0;line-height:1.45}
+      .editor-msg.ok{color:var(--ok);font-weight:600}
+      .editor-msg.err{color:var(--danger);font-weight:600}
+      .import-box{border:1px solid var(--panel-border);border-radius:12px;padding:6px 12px 12px;margin-top:12px}
+      .import-box summary{font-weight:700;font-size:14px;cursor:pointer;padding:6px 0}
+      .import-box textarea{min-height:84px;resize:vertical;margin:8px 0;line-height:1.4}
+      .import-box input[type="file"]{font-size:13px;max-width:100%}
     </style>
   </head>
   <body>
@@ -235,8 +272,34 @@
         </form>
       </section>
 
-      <!-- ======== PANEL DE REVISIÓN ======== -->
-      <aside class="panel" aria-label="Panel de revisión">
+      <!-- ======== PANEL LATERAL ======== -->
+      <aside class="panel" aria-label="Panel de revisión y editor">
+        <div class="card">
+          <h2>Editor del flujo</h2>
+          <p class="sub">Modifica textos, listas y reglas del chatbot y pruébalos al momento en el chat, sin tocar código.</p>
+          <button class="btn-primary wide-btn" id="btnToggleEditor" type="button">✏️ Editar flujo</button>
+          <p class="diff-line" id="diffLine">Sin cambios respecto a la versión de fábrica.</p>
+          <ul class="diff-list" id="diffList" hidden></ul>
+          <div class="editor-wrap" id="editorWrap" hidden>
+            <p class="sim-note">En esta versión compartible, los cambios viven solo en esta sesión: expórtalos en JSON para conservarlos y compartirlos. Los textos aceptan &lt;strong&gt; para negritas, &lt;br&gt; para saltos de línea y marcadores como {paciente}, {fecha}, {periodo}, {hora}, {nombre}, {modalidad} o {horas}, que el bot reemplaza con los datos de la conversación.</p>
+            <div id="editorForm"></div>
+            <div class="editor-actions">
+              <button class="btn-primary" id="btnApply" type="button">Aplicar cambios y probar</button>
+              <button class="btn-ghost" id="btnExport" type="button">⬇ Exportar JSON</button>
+              <button class="btn-ghost" id="btnCopyJson" type="button">Copiar JSON</button>
+              <button class="btn-ghost danger" id="btnResetFactory" type="button">Restablecer de fábrica</button>
+            </div>
+            <p class="editor-msg" id="editorMsg" role="status"></p>
+            <details class="import-box">
+              <summary>Importar configuración (JSON)</summary>
+              <input type="file" id="importFile" accept=".json,application/json" aria-label="Subir archivo JSON del flujo" />
+              <textarea id="importText" placeholder="…o pega aquí el contenido de un flujo-cepaval.json exportado"></textarea>
+              <button class="btn-ghost" id="btnImport" type="button">Importar y aplicar</button>
+              <p class="editor-msg" id="importMsg" role="status"></p>
+            </details>
+          </div>
+        </div>
+
         <div class="card">
           <h2>Panel de revisión</h2>
           <p class="sub">Estado en vivo de la simulación, según la guía de revisión del flujo del chatbot (8 de julio de 2026).</p>
@@ -275,12 +338,7 @@
         <div class="card">
           <h2>Datos de simulación</h2>
           <p class="sub">Pacientes ficticios precargados solo para probar la rama de cancelación:</p>
-          <ul class="simdata">
-            <li><strong>Sofía Herrera</strong> — tiene una cita activa (camino feliz de cancelación).</li>
-            <li><strong>Diego Ramos</strong> — aparece dos veces en el registro (duplicado).</li>
-            <li><strong>María Torres</strong> — está registrada, pero sin citas activas.</li>
-            <li>Cualquier otro nombre — no se encuentra en el registro.</li>
-          </ul>
+          <ul class="simdata" id="simDataList"></ul>
           <p class="sim-note">Esto es una simulación: ningún dato es real y ninguna cita se agenda de verdad.</p>
         </div>
       </aside>
@@ -299,6 +357,22 @@
       }
       function esc(s){
         return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      }
+      function clone(o){ return JSON.parse(JSON.stringify(o)); }
+      function tpl(s, map){
+        var out = String(s == null ? '' : s);
+        for (var k in map){ out = out.split('{' + k + '}').join(map[k]); }
+        return out;
+      }
+      function getPath(obj, path){
+        var parts = path.split('.'), cur = obj;
+        for (var i = 0; i < parts.length; i++){ if (cur == null) return undefined; cur = cur[parts[i]]; }
+        return cur;
+      }
+      function setPath(obj, path, val){
+        var parts = path.split('.'), cur = obj;
+        for (var i = 0; i < parts.length - 1; i++){ if (cur[parts[i]] == null) cur[parts[i]] = {}; cur = cur[parts[i]]; }
+        cur[parts[parts.length - 1]] = val;
       }
       function nowTime(){
         var d = new Date();
@@ -319,6 +393,207 @@
       }
       function esSi(t){ return /^(si|yes|ok|dale|confirmo|claro|correcto)\b/.test(t); }
       function esNo(t){ return /^(no|nop|negativo|mejor no)\b/.test(t); }
+
+      /* ================= Configuración del flujo (editable) =================
+         FABRICA = valores originales del PDF. CFG = configuración vigente.
+         TODA la lógica del bot lee de CFG, nunca de textos fijos. */
+      var FABRICA = {
+        general: {
+          saludo: '¡Hola! 👋 Bienvenido/a a <strong>CEPAVAL</strong>. Soy el asistente virtual y te ayudo con citas, servicios, precios y más.',
+          menuIntro: '¿En qué puedo ayudarte hoy?',
+          op1: 'Agendar cita',
+          op2: 'Servicios',
+          op3: 'Precios',
+          op4: 'Ubicación y horarios',
+          op5: 'Ya soy paciente',
+          op6: 'Hablar con una persona',
+          menuPie: 'Escribe el número o el nombre de la opción.',
+          noEntendido: 'Disculpa, no entendí tu mensaje. 🙏 Puedo ayudarte con esto:',
+          volverMenu: 'Listo, volvemos al menú principal.',
+          cierre: 'La conversación de prueba terminó (comando «cerrar chat»).'
+        },
+        cita: {
+          inicio: '¡Perfecto! Vamos a agendar tu cita. 📅<br><br>Primero, ¿cuál es el <strong>nombre del acudiente</strong> (la persona que acompaña al paciente)?',
+          qTelefono: 'Gracias, {acudiente}. ¿Cuál es el <strong>teléfono de contacto</strong>?',
+          qPaciente: '¿Cuál es el <strong>nombre del paciente</strong>?',
+          qEdad: '¿Qué <strong>edad</strong> tiene {paciente}? Escríbela <strong>solo en números</strong>, por ejemplo: 7',
+          errEdad: 'La edad debe escribirse <strong>solo en números</strong>. Por ejemplo, si tiene siete años, escribe: <strong>7</strong>.<br><br>¿Qué edad tiene el paciente?',
+          qMotivo: '¿Cuál es el <strong>motivo de consulta</strong>?',
+          qServicio: '¿Qué <strong>servicio</strong> necesitas?',
+          qSede: '¿En qué <strong>sede</strong> prefieres la cita?',
+          qDocumentos: '¿El paciente tiene <strong>documentos o evaluaciones previas</strong>?',
+          qReferencia: '¿<strong>Cómo conociste CEPAVAL</strong>?',
+          qFecha: 'Ya casi terminamos. ¿Qué <strong>fecha</strong> prefieres para la cita? Escríbela en un formato claro, por ejemplo: <strong>{ejemplo}</strong> o «25 de octubre».',
+          errFecha: 'No pude leer esa fecha. Escríbela con un formato claro, por ejemplo: <strong>{ejemplo}</strong> (día/mes/año) o «25 de octubre de 2026».',
+          errFechaPasada: 'Esa fecha ya pasó. 📅 La cita debe ser en una <strong>fecha futura</strong>. ¿Qué fecha prefieres?',
+          confirmFecha: 'Elegiste el <strong>{fecha}</strong>. ¿Confirmas esta fecha?',
+          errConfirmFecha: 'Por favor responde <strong>Sí</strong> o <strong>No</strong>: ¿confirmas el {fecha}?',
+          fechaOtra: 'Sin problema. ¿Qué <strong>fecha</strong> prefieres entonces?',
+          qPeriodo: '¿Prefieres horario de <strong>mañana</strong> o de <strong>tarde</strong>?',
+          confirmPeriodo: 'Elegiste horario de <strong>{periodo}</strong>. ¿Confirmas?',
+          errPeriodo: 'Elige una opción: ¿<strong>mañana</strong> o <strong>tarde</strong>?',
+          errConfirmPeriodo: 'Por favor responde <strong>Sí</strong> o <strong>No</strong>: ¿confirmas el horario de {periodo}?',
+          periodoOtro: 'De acuerdo. ¿Prefieres <strong>mañana</strong> o <strong>tarde</strong>?',
+          horasIntro: 'Estos son los horarios del turno de {turno}:<br>{lista}<br><br>¿A qué hora deseas la cita?',
+          errHora: 'Esa hora no está entre las opciones disponibles.',
+          errHoraOcupada: 'Ese horario (<strong>{hora}</strong>) ya está ocupado. Elige uno de los horarios disponibles:',
+          finalOk: '¡Listo! ✅ Ya tengo la <strong>información inicial</strong> de tu cita.',
+          finalSeguimiento: 'El equipo de recepción o la profesional encargada te dará <strong>seguimiento</strong> para confirmarla. ¡Gracias por contactar a CEPAVAL!'
+        },
+        servicios: {
+          pregunta: 'Con gusto te cuento sobre nuestros servicios. ¿Sobre cuál deseas información?',
+          reintento: 'Puedo ayudarte con <strong>Fonoaudiología</strong>, <strong>Terapia Ocupacional</strong> o <strong>Psicología</strong>. ¿Cuál te interesa?',
+          lista: [
+            { nombre: 'Fonoaudiología', palabras: 'fonoaudiologia, fono, lenguaje, habla',
+              texto: '<strong>Fonoaudiología</strong>: evaluación y terapia del lenguaje, el habla, la comunicación y la deglución. Acompañamos a niños y adultos con dificultades para hablar, pronunciar, comprender o expresarse.' },
+            { nombre: 'Terapia Ocupacional', palabras: 'terapia ocupacional, ocupacional',
+              texto: '<strong>Terapia Ocupacional</strong>: apoyo para desarrollar autonomía y habilidades motoras, sensoriales y de la vida diaria (vestirse, escribir, jugar, estudiar), especialmente en niños y adolescentes.' },
+            { nombre: 'Psicología', palabras: 'psicologia, psicologo, psicologa, emocional, conducta',
+              texto: '<strong>Psicología</strong>: evaluación y acompañamiento emocional y conductual para niños, adolescentes y adultos, con orientación también para la familia.' }
+          ]
+        },
+        precios: {
+          qServicio: 'Para ayudarte con el precio, cuéntame: ¿de qué <strong>servicio</strong> deseas saber el costo?',
+          qSede: '¿En qué <strong>sede</strong>?',
+          qModalidad: '¿Es para una <strong>evaluación</strong> o para <strong>terapia</strong>?',
+          qTipo: '¿El paciente es <strong>niño, adolescente o adulto</strong>?',
+          derivacion: 'Gracias. Paso tu consulta a <strong>recepción</strong> para que te confirmen el <strong>costo actualizado</strong>, ya que depende de la sede, el servicio, la modalidad ({modalidad}) y la profesional. Te contactarán a este número. 💬'
+        },
+        sedes: {
+          intro: 'Estas son nuestras sedes:',
+          pie: 'Al agendar tu cita, recepción te confirma la dirección exacta y el horario de la sede que elijas.',
+          lista: [
+            { nombre: 'Marbella', textoLista: 'dirección y horario de la sede de Marbella.',
+              textoDetalle: 'Dirección y horario de la sede Marbella: puedes confirmarlos con recepción al agendar tu cita, o pregúntanos por aquí y te los compartimos.' },
+            { nombre: 'Costa del Este', textoLista: 'dirección y horario de la sede de Costa del Este.',
+              textoDetalle: 'Dirección y horario de la sede Costa del Este: puedes confirmarlos con recepción al agendar tu cita, o pregúntanos por aquí y te los compartimos.' }
+          ]
+        },
+        paciente: {
+          menuTexto: 'Claro, ya eres paciente de CEPAVAL. ¿Qué necesitas hacer?',
+          menuAyuda: 'Puedo ayudarte con: <strong>cancelar cita</strong>, <strong>pagos</strong>, <strong>política de cancelación</strong> o pasar tu caso a <strong>recepción</strong>. ¿Qué necesitas?',
+          pagos: '<strong>Formas de pago</strong> 💳<br>• Aceptamos <strong>tarjetas</strong> y <strong>transferencias</strong>.<br>• <strong>No aceptamos efectivo.</strong><br>• No trabajamos con seguros de forma directa, pero te entregamos los <strong>formularios y facturas</strong> para que solicites el reembolso a tu aseguradora.',
+          politica: '<strong>Política de cancelación</strong><br>Las citas deben cancelarse con al menos <strong>{horas} horas de anticipación</strong>. Así podemos ofrecer el espacio a otra familia.',
+          horasMinimas: 6,
+          cancel: {
+            qNombre: 'Para buscar la cita, dime el <strong>nombre y apellido del paciente</strong>.',
+            noEncontrado: 'No encontré ningún paciente registrado con el nombre «{nombre}». Revisa que esté escrito igual que en el registro e inténtalo de nuevo; si necesitas ayuda, escribo a recepción por ti.',
+            duplicado: 'Encontré <strong>más de un paciente</strong> registrado con el nombre «{nombre}». Para no cancelar la cita equivocada, paso tu caso a <strong>recepción</strong>, que te ayudará a identificar el registro correcto.',
+            sinCitas: '<strong>{nombre}</strong> está registrado/a, pero <strong>no tiene citas activas</strong> para cancelar. Si crees que es un error, recepción puede revisarlo.',
+            yaCancelada: 'La cita de <strong>{nombre}</strong> ya fue cancelada antes en esta simulación, así que no tiene citas activas.',
+            encontradaIntro: 'Encontré esta cita activa de <strong>{nombre}</strong>:',
+            confirmPregunta: '¿Confirmas que deseas <strong>cancelarla</strong>?',
+            okCancelada: 'Listo. La cita de <strong>{nombre}</strong> quedó <strong>cancelada</strong>. Si deseas reprogramarla, con gusto agendamos una nueva.',
+            noCancelada: 'De acuerdo, <strong>no cancelé</strong> la cita. Sigue activa. 👍',
+            errConfirm: 'Por favor responde <strong>Sí</strong> para cancelar la cita o <strong>No</strong> para mantenerla.'
+          },
+          lista: [
+            { nombre: 'Sofía Herrera', tipo: 'activa', servicio: 'Fonoaudiología', sede: 'Marbella', hora: '10:00 a. m.', nota: 'tiene una cita activa (camino feliz de cancelación).' },
+            { nombre: 'Diego Ramos', tipo: 'duplicado', servicio: '', sede: '', hora: '', nota: 'aparece dos veces en el registro (duplicado).' },
+            { nombre: 'Diego Ramos', tipo: 'duplicado', servicio: '', sede: '', hora: '', nota: 'aparece dos veces en el registro (duplicado).' },
+            { nombre: 'María Torres', tipo: 'sinCitas', servicio: '', sede: '', hora: '', nota: 'está registrada, pero sin citas activas.' }
+          ]
+        },
+        deriv: {
+          persona1: 'Claro que sí. Paso tu conversación a <strong>recepción / una profesional del equipo</strong> de CEPAVAL. 🙌',
+          persona2: 'A partir de aquí te atiende una persona por este mismo medio, así que ya no sigo con las opciones automáticas. Si quieres volver al asistente automático, escribe <strong>menu</strong>.',
+          seguimiento: 'Tu caso ya está con el equipo de CEPAVAL y una persona te responderá pronto. 🙌<br><br>Si quieres volver al asistente automático, escribe <strong>menu</strong>.',
+          emergencia1: '⚠️ <strong>Esto puede ser una emergencia.</strong> Si la persona tiene convulsiones o dificultad para respirar, acude de inmediato a <strong>urgencias</strong> o llama a emergencias / a su médico especialista. No esperes a agendar una cita.',
+          emergencia2: 'Cuando estén fuera de peligro, con gusto te ayudamos a coordinar el seguimiento con nuestro equipo.',
+          diagnostico1: 'Entiendo tu preocupación. Por este medio <strong>no puedo dar diagnósticos ni indicar ejercicios</strong>: eso debe valorarlo la profesional en una evaluación.',
+          diagnostico2: 'Paso tu caso a recepción para que te contacten y te ayuden a coordinar la valoración.'
+        },
+        horarios: {
+          mananaDisponibles: ['8:00 a. m.', '10:00 a. m.', '11:00 a. m.'],
+          mananaOcupadas: ['9:00 a. m.'],
+          tardeDisponibles: ['1:00 p. m.', '2:00 p. m.', '4:00 p. m.', '5:00 p. m.'],
+          tardeOcupadas: ['3:00 p. m.']
+        }
+      };
+      var CFG = clone(FABRICA);
+      var lastExportedJSON = null;
+
+      /* Estructuras derivadas de CFG (se reconstruyen al aplicar cambios) */
+      var SERVICIOS = [], SEDES_LIST = [], PACIENTES = [], SLOTS = { manana: [], tarde: [] };
+      function mkSlot(label, ocupada, periodoKey){
+        var t = norm(label);
+        var m = t.match(/(\d{1,2})(?::(\d{2}))?\s*(a|p)?/);
+        var h = m ? +m[1] : null;
+        var mer = (m && m[3]) ? (m[3] === 'p' ? 'pm' : 'am') : (periodoKey === 'manana' ? 'am' : 'pm');
+        return { h: h, mer: mer, label: label, ocupada: ocupada };
+      }
+      function slotKeyNum(s){
+        if (s.h == null) return 999;
+        return (s.mer === 'pm' ? 12 : 0) + (s.h % 12);
+      }
+      function buildSlots(periodoKey){
+        var disp = CFG.horarios[periodoKey + 'Disponibles'] || [];
+        var ocup = CFG.horarios[periodoKey + 'Ocupadas'] || [];
+        var all = disp.map(function(l){ return mkSlot(l, false, periodoKey); })
+          .concat(ocup.map(function(l){ return mkSlot(l, true, periodoKey); }));
+        all.sort(function(a, b){ return slotKeyNum(a) - slotKeyNum(b); });
+        return all;
+      }
+      function buildDerived(){
+        SERVICIOS = CFG.servicios.lista.map(function(s){
+          return {
+            nombre: s.nombre,
+            palabras: String(s.palabras || '').split(',').map(function(w){ return norm(w); }).filter(function(w){ return !!w; }),
+            texto: s.texto
+          };
+        });
+        SEDES_LIST = CFG.sedes.lista;
+        PACIENTES = CFG.paciente.lista;
+        SLOTS = { manana: buildSlots('manana'), tarde: buildSlots('tarde') };
+      }
+      function detectarServicio(t){
+        for (var i = 0; i < SERVICIOS.length; i++){
+          if (t.indexOf(norm(SERVICIOS[i].nombre)) !== -1) return SERVICIOS[i];
+          for (var j = 0; j < SERVICIOS[i].palabras.length; j++){
+            if (t.indexOf(SERVICIOS[i].palabras[j]) !== -1) return SERVICIOS[i];
+          }
+        }
+        return null;
+      }
+      function detectarSede(t){
+        for (var i = 0; i < SEDES_LIST.length; i++){
+          if (t.indexOf(norm(SEDES_LIST[i].nombre)) !== -1) return SEDES_LIST[i].nombre;
+        }
+        return null;
+      }
+      function sedePorNombre(nombre){
+        for (var i = 0; i < SEDES_LIST.length; i++){
+          if (SEDES_LIST[i].nombre === nombre) return SEDES_LIST[i];
+        }
+        return null;
+      }
+      function primerPacienteActivo(){
+        for (var i = 0; i < PACIENTES.length; i++){
+          if (PACIENTES[i].tipo === 'activa') return PACIENTES[i];
+        }
+        return null;
+      }
+      function citaEjemplo(pac){
+        var d = new Date(); d.setDate(d.getDate() + 4);
+        return { servicio: pac.servicio || '', sede: pac.sede || '', fechaTxt: fechaLarga(d), hora: pac.hora || '' };
+      }
+      function quickServicios(){
+        return SERVICIOS.map(function(s){ return { label: s.nombre, send: s.nombre }; });
+      }
+      function quickSedes(){
+        return SEDES_LIST.map(function(s){ return { label: s.nombre, send: s.nombre }; });
+      }
+      var NUM_EMOJI = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣'];
+      function opcionesMenu(){
+        return [CFG.general.op1, CFG.general.op2, CFG.general.op3, CFG.general.op4, CFG.general.op5, CFG.general.op6];
+      }
+      function menuTexto(){
+        var lineas = opcionesMenu().map(function(o, i){ return NUM_EMOJI[i] + ' ' + esc(o); });
+        return esc(CFG.general.menuIntro) + '<br><br>' + lineas.join('<br>') + '<br><br>' + esc(CFG.general.menuPie);
+      }
+      function menuQuick(){
+        return opcionesMenu().map(function(o, i){ return { label: (i + 1) + ' · ' + o, send: String(i + 1) }; });
+      }
 
       /* ================= Estado ================= */
       var flags, state;
@@ -341,65 +616,13 @@
           branch: 'Sin iniciar',
           cita: {},
           citaEstado: null,        // {status:'PENDING', resumen:'...'}
-          ejemploCancelada: false, // cita de Sofía Herrera
+          canceladas: {},          // nombres (normalizados) de pacientes ejemplo cancelados
           derivacion: null,
           cancelTarget: null
         };
       }
       flags = freshFlags();
       state = freshState();
-
-      /* Pacientes ficticios para la cancelación */
-      function citaEjemplo(){
-        var d = new Date(); d.setDate(d.getDate() + 4);
-        return { servicio: 'Fonoaudiología', sede: 'Marbella', fechaTxt: fechaLarga(d), hora: '10:00 a. m.' };
-      }
-      var PACIENTES = [
-        { nombre: 'Sofía Herrera', tipo: 'activa' },
-        { nombre: 'Diego Ramos', tipo: 'duplicado' },
-        { nombre: 'Diego Ramos', tipo: 'duplicado' },
-        { nombre: 'María Torres', tipo: 'sinCitas' }
-      ];
-
-      var SERVICIOS = [
-        { clave: 'fono', palabras: ['fonoaudiologia', 'fono', 'lenguaje', 'habla'],
-          nombre: 'Fonoaudiología',
-          texto: '<strong>Fonoaudiología</strong>: evaluación y terapia del lenguaje, el habla, la comunicación y la deglución. Acompañamos a niños y adultos con dificultades para hablar, pronunciar, comprender o expresarse.' },
-        { clave: 'to', palabras: ['terapia ocupacional', 'ocupacional'],
-          nombre: 'Terapia Ocupacional',
-          texto: '<strong>Terapia Ocupacional</strong>: apoyo para desarrollar autonomía y habilidades motoras, sensoriales y de la vida diaria (vestirse, escribir, jugar, estudiar), especialmente en niños y adolescentes.' },
-        { clave: 'psi', palabras: ['psicologia', 'psicologo', 'psicologa', 'emocional', 'conducta'],
-          nombre: 'Psicología',
-          texto: '<strong>Psicología</strong>: evaluación y acompañamiento emocional y conductual para niños, adolescentes y adultos, con orientación también para la familia.' }
-      ];
-      function detectarServicio(t){
-        for (var i = 0; i < SERVICIOS.length; i++){
-          for (var j = 0; j < SERVICIOS[i].palabras.length; j++){
-            if (t.indexOf(SERVICIOS[i].palabras[j]) !== -1) return SERVICIOS[i];
-          }
-        }
-        return null;
-      }
-      function detectarSede(t){
-        if (t.indexOf('marbella') !== -1) return 'Marbella';
-        if (t.indexOf('costa del este') !== -1) return 'Costa del Este';
-        return null;
-      }
-      var SLOTS = {
-        manana: [
-          { h: 8,  mer: 'am', label: '8:00 a. m.',  ocupada: false },
-          { h: 9,  mer: 'am', label: '9:00 a. m.',  ocupada: true },
-          { h: 10, mer: 'am', label: '10:00 a. m.', ocupada: false },
-          { h: 11, mer: 'am', label: '11:00 a. m.', ocupada: false }
-        ],
-        tarde: [
-          { h: 1, mer: 'pm', label: '1:00 p. m.', ocupada: false },
-          { h: 2, mer: 'pm', label: '2:00 p. m.', ocupada: false },
-          { h: 3, mer: 'pm', label: '3:00 p. m.', ocupada: true },
-          { h: 4, mer: 'pm', label: '4:00 p. m.', ocupada: false },
-          { h: 5, mer: 'pm', label: '5:00 p. m.', ocupada: false }
-        ]
-      };
 
       /* ================= Render del chat ================= */
       var lastWho = null;
@@ -432,18 +655,6 @@
           quickBar.appendChild(b);
         });
       }
-      var MENU_QUICK = [
-        { label: '1 · Agendar cita', send: 'Agendar cita' },
-        { label: '2 · Servicios', send: 'Servicios' },
-        { label: '3 · Precios', send: 'Precios' },
-        { label: '4 · Ubicación y horarios', send: 'Ubicación y horarios' },
-        { label: '5 · Ya soy paciente', send: 'Ya soy paciente' },
-        { label: '6 · Hablar con persona', send: 'Hablar con una persona' }
-      ];
-      var MENU_TEXTO = '¿En qué puedo ayudarte hoy?<br><br>' +
-        '1️⃣ Agendar cita<br>2️⃣ Servicios<br>3️⃣ Precios<br>' +
-        '4️⃣ Ubicación y horarios<br>5️⃣ Ya soy paciente<br>6️⃣ Hablar con una persona<br><br>' +
-        'Escribe el número o el nombre de la opción.';
       var SI_NO = [ { label: 'Sí', send: 'Sí' }, { label: 'No', send: 'No' } ];
 
       function showTyping(){
@@ -485,10 +696,13 @@
           pc.innerHTML = '<span class="badge none">Sin cita</span>';
         }
         var pe = document.getElementById('pEjemplo');
-        if (state.ejemploCancelada){
-          pe.innerHTML = '<span class="badge cancelled">CANCELLED</span> Sofía Herrera · Fonoaudiología, Marbella';
+        var ej = primerPacienteActivo();
+        if (!ej){
+          pe.innerHTML = '<span class="badge none">Sin paciente de ejemplo activo</span>';
+        } else if (state.canceladas[norm(ej.nombre)]){
+          pe.innerHTML = '<span class="badge cancelled">CANCELLED</span> ' + esc(ej.nombre) + ' · ' + esc(ej.servicio) + ', ' + esc(ej.sede);
         } else {
-          pe.innerHTML = '<span class="badge pending">Activa · PENDING</span> Sofía Herrera · Fonoaudiología, Marbella';
+          pe.innerHTML = '<span class="badge pending">Activa · PENDING</span> ' + esc(ej.nombre) + ' · ' + esc(ej.servicio) + ', ' + esc(ej.sede);
         }
         document.getElementById('pDerivacion').innerHTML = state.derivacion
           ? '<span class="badge derived">Derivada</span> ' + esc(state.derivacion)
@@ -516,6 +730,22 @@
             (it.prog && !it.done ? '<span class="prog">' + it.prog + '</span>' : '');
           ul.appendChild(li);
         });
+      }
+      function renderSimData(){
+        var ul = document.getElementById('simDataList');
+        ul.innerHTML = '';
+        var vistos = {};
+        PACIENTES.forEach(function(p){
+          var k = norm(p.nombre);
+          if (vistos[k]) return;
+          vistos[k] = true;
+          var li = document.createElement('li');
+          li.innerHTML = '<strong>' + esc(p.nombre) + '</strong> — ' + esc(p.nota || '');
+          ul.appendChild(li);
+        });
+        var li2 = document.createElement('li');
+        li2.textContent = 'Cualquier otro nombre — no se encuentra en el registro.';
+        ul.appendChild(li2);
       }
       function setBranch(txt){ state.branch = txt; renderPanel(); }
       function derivar(motivo){ state.derivacion = motivo; renderPanel(); }
@@ -561,9 +791,9 @@
       }
       function textoHoras(periodoKey){
         var lista = SLOTS[periodoKey].map(function(s){
-          return '• ' + s.label + (s.ocupada ? ' (ocupada)' : '');
+          return '• ' + esc(s.label) + (s.ocupada ? ' (ocupada)' : '');
         }).join('<br>');
-        return 'Estos son los horarios del turno de ' + (periodoKey === 'manana' ? 'mañana' : 'tarde') + ':<br>' + lista + '<br><br>¿A qué hora deseas la cita?';
+        return tpl(CFG.cita.horasIntro, { turno: periodoKey === 'manana' ? 'mañana' : 'tarde', lista: lista });
       }
 
       /* ================= Flujos compartidos ================= */
@@ -571,56 +801,55 @@
         flags.menu = true;
         state.step = 'menu';
         setBranch('Menú principal');
-        var msgs = saludoPrevio ? [saludoPrevio, MENU_TEXTO] : [MENU_TEXTO];
-        await botSay(msgs, MENU_QUICK);
+        var msgs = saludoPrevio ? [saludoPrevio, menuTexto()] : [menuTexto()];
+        await botSay(msgs, menuQuick());
       }
       async function irAlMenuDesdeComando(){
         flags.reinicio = true;
         renderPanel();
-        await mostrarMenu('Listo, volvemos al menú principal.');
+        await mostrarMenu(CFG.general.volverMenu);
       }
       async function respuestaEmergencia(){
         flags.deriv.emergencia = true;
         derivar('Emergencia → se recomienda urgencias');
         setBranch('Caso especial · Emergencia');
         state.step = 'menu';
-        await botSay([
-          '⚠️ <strong>Esto puede ser una emergencia.</strong> Si la persona tiene convulsiones o dificultad para respirar, acude de inmediato a <strong>urgencias</strong> o llama a emergencias / a su médico especialista. No esperes a agendar una cita.',
-          'Cuando estén fuera de peligro, con gusto te ayudamos a coordinar el seguimiento con nuestro equipo.'
-        ], [{ label: 'Ver el menú', send: 'menu' }, { label: 'Agendar cita', send: 'Agendar cita' }]);
+        await botSay([CFG.deriv.emergencia1, CFG.deriv.emergencia2],
+          [{ label: 'Ver el menú', send: 'menu' }, { label: 'Agendar cita', send: 'Agendar cita' }]);
       }
       async function respuestaDiagnostico(){
         flags.deriv.diagnostico = true;
         derivar('Consulta de diagnóstico → recepción / profesional');
         setBranch('Caso especial · Diagnóstico (derivado)');
         state.step = 'menu';
-        await botSay([
-          'Entiendo tu preocupación. Por este medio <strong>no puedo dar diagnósticos ni indicar ejercicios</strong>: eso debe valorarlo la profesional en una evaluación.',
-          'Paso tu caso a recepción para que te contacten y te ayuden a coordinar la valoración.'
-        ], [{ label: 'Agendar cita', send: 'Agendar cita' }, { label: 'Ver el menú', send: 'menu' }]);
+        await botSay([CFG.deriv.diagnostico1, CFG.deriv.diagnostico2],
+          [{ label: 'Agendar cita', send: 'Agendar cita' }, { label: 'Ver el menú', send: 'menu' }]);
       }
       async function derivarPersona(motivo){
         derivar(motivo);
         setBranch('Rama 6 · Hablar con una persona');
         state.step = 'human';
-        await botSay([
-          'Claro que sí. Paso tu conversación a <strong>recepción / una profesional del equipo</strong> de CEPAVAL. 🙌',
-          'A partir de aquí te atiende una persona por este mismo medio, así que ya no sigo con las opciones automáticas. Si quieres volver al asistente automático, escribe <strong>menu</strong>.'
-        ], [{ label: 'Volver al asistente (menu)', send: 'menu' }]);
+        await botSay([CFG.deriv.persona1, CFG.deriv.persona2],
+          [{ label: 'Volver al asistente (menu)', send: 'menu' }]);
       }
       async function textoSede(nombre){
         flags.info.sedes = true; flags.ramas['4'] = true; renderPanel();
         setBranch('Rama 4 · Ubicación y horarios');
         state.step = 'menu';
-        await botSay('📍 <strong>Sede ' + nombre + '</strong><br>Dirección y horario de la sede ' + nombre + ': puedes confirmarlos con recepción al agendar tu cita, o pregúntanos por aquí y te los compartimos.',
+        var sede = sedePorNombre(nombre);
+        await botSay('📍 <strong>Sede ' + esc(nombre) + '</strong><br>' + (sede ? sede.textoDetalle : ''),
           [{ label: 'Ver todas las sedes', send: 'Ubicación y horarios' }, { label: 'Agendar cita', send: 'Agendar cita' }, { label: 'Menú', send: 'menu' }]);
       }
       async function textoTodasSedes(){
         flags.info.sedes = true; flags.ramas['4'] = true; renderPanel();
         setBranch('Rama 4 · Ubicación y horarios');
         state.step = 'menu';
-        await botSay('Estas son nuestras sedes:<br><br>📍 <strong>Marbella</strong> — dirección y horario de la sede de Marbella.<br>📍 <strong>Costa del Este</strong> — dirección y horario de la sede de Costa del Este.<br><br>Al agendar tu cita, recepción te confirma la dirección exacta y el horario de la sede que elijas.',
-          [{ label: 'Sede Marbella', send: 'Marbella' }, { label: 'Sede Costa del Este', send: 'Costa del Este' }, { label: 'Agendar cita', send: 'Agendar cita' }, { label: 'Menú', send: 'menu' }]);
+        var items = SEDES_LIST.map(function(s){
+          return '📍 <strong>' + esc(s.nombre) + '</strong> — ' + s.textoLista;
+        }).join('<br>');
+        var quick = SEDES_LIST.map(function(s){ return { label: 'Sede ' + s.nombre, send: s.nombre }; })
+          .concat([{ label: 'Agendar cita', send: 'Agendar cita' }, { label: 'Menú', send: 'menu' }]);
+        await botSay(esc(CFG.sedes.intro) + '<br><br>' + items + '<br><br>' + esc(CFG.sedes.pie), quick);
       }
 
       /* ================= RAMA 1: Agendar cita ================= */
@@ -629,7 +858,7 @@
         state.cita = {};
         state.step = 'cita_acudiente';
         setBranch('Rama 1 · Agendar cita');
-        await botSay('¡Perfecto! Vamos a agendar tu cita. 📅<br><br>Primero, ¿cuál es el <strong>nombre del acudiente</strong> (la persona que acompaña al paciente)?', []);
+        await botSay(CFG.cita.inicio, []);
       }
       async function pasoCita(raw, t){
         var c = state.cita;
@@ -637,112 +866,102 @@
           case 'cita_acudiente':
             c.acudiente = raw;
             state.step = 'cita_telefono';
-            await botSay('Gracias, ' + esc(raw) + '. ¿Cuál es el <strong>teléfono de contacto</strong>?', []);
+            await botSay(tpl(CFG.cita.qTelefono, { acudiente: esc(raw) }), []);
             break;
           case 'cita_telefono':
             c.telefono = raw;
             state.step = 'cita_paciente';
-            await botSay('¿Cuál es el <strong>nombre del paciente</strong>?', []);
+            await botSay(CFG.cita.qPaciente, []);
             break;
           case 'cita_paciente':
             c.paciente = raw;
             state.step = 'cita_edad';
-            await botSay('¿Qué <strong>edad</strong> tiene ' + esc(raw) + '? Escríbela <strong>solo en números</strong>, por ejemplo: 7', []);
+            await botSay(tpl(CFG.cita.qEdad, { paciente: esc(raw) }), []);
             break;
           case 'cita_edad': {
             var limpio = t.replace(/(anos|año|anios)/g, '').trim();
             if (!/^\d{1,3}$/.test(limpio)){
-              await botSay('La edad debe escribirse <strong>solo en números</strong>. Por ejemplo, si tiene siete años, escribe: <strong>7</strong>.<br><br>¿Qué edad tiene el paciente?', []);
+              await botSay(CFG.cita.errEdad, []);
               break;
             }
             c.edad = limpio;
             state.step = 'cita_motivo';
-            await botSay('¿Cuál es el <strong>motivo de consulta</strong>?', []);
+            await botSay(CFG.cita.qMotivo, []);
             break;
           }
-          case 'cita_motivo': {
+          case 'cita_motivo':
             c.motivo = raw;
             state.step = 'cita_servicio';
-            await botSay('¿Qué <strong>servicio</strong> necesitas?', [
-              { label: 'Fonoaudiología', send: 'Fonoaudiología' },
-              { label: 'Terapia Ocupacional', send: 'Terapia ocupacional' },
-              { label: 'Psicología', send: 'Psicología' }
-            ]);
+            await botSay(CFG.cita.qServicio, quickServicios());
             break;
-          }
           case 'cita_servicio': {
             var sv = detectarServicio(t);
             c.servicio = sv ? sv.nombre : raw;
             state.step = 'cita_sede';
-            await botSay('¿En qué <strong>sede</strong> prefieres la cita?', [
-              { label: 'Marbella', send: 'Marbella' },
-              { label: 'Costa del Este', send: 'Costa del Este' }
-            ]);
+            await botSay(CFG.cita.qSede, quickSedes());
             break;
           }
-          case 'cita_sede': {
+          case 'cita_sede':
             c.sede = detectarSede(t) || raw;
             state.step = 'cita_documentos';
-            await botSay('¿El paciente tiene <strong>documentos o evaluaciones previas</strong>?', SI_NO);
+            await botSay(CFG.cita.qDocumentos, SI_NO);
             break;
-          }
           case 'cita_documentos':
             c.documentos = esSi(t) ? 'Sí' : (esNo(t) ? 'No' : raw);
             state.step = 'cita_referencia';
-            await botSay('¿<strong>Cómo conociste CEPAVAL</strong>?', [
+            await botSay(CFG.cita.qReferencia, [
               { label: 'Redes sociales', send: 'Redes sociales' },
               { label: 'Recomendación', send: 'Me lo recomendaron' },
               { label: 'Google', send: 'Google' },
               { label: 'Otro', send: 'Otro' }
             ]);
             break;
-          case 'cita_referencia': {
+          case 'cita_referencia':
             c.referencia = raw;
             state.step = 'cita_fecha';
-            await botSay('Ya casi terminamos. ¿Qué <strong>fecha</strong> prefieres para la cita? Escríbela en un formato claro, por ejemplo: <strong>' + ejemploFecha() + '</strong> o «25 de octubre».', []);
+            await botSay(tpl(CFG.cita.qFecha, { ejemplo: ejemploFecha() }), []);
             break;
-          }
           case 'cita_fecha': {
             var f = parseFecha(raw);
             if (f === null || f === 'invalida'){
               flags.fechaValida = true; renderPanel();
-              await botSay('No pude leer esa fecha. Escríbela con un formato claro, por ejemplo: <strong>' + ejemploFecha() + '</strong> (día/mes/año) o «25 de octubre de 2026».', []);
+              await botSay(tpl(CFG.cita.errFecha, { ejemplo: ejemploFecha() }), []);
               break;
             }
             if (f < todayStart()){
               flags.fechaValida = true; renderPanel();
-              await botSay('Esa fecha ya pasó. 📅 La cita debe ser en una <strong>fecha futura</strong>. ¿Qué fecha prefieres?', []);
+              await botSay(CFG.cita.errFechaPasada, []);
               break;
             }
             c.fecha = f;
             state.step = 'cita_fecha_confirm';
-            await botSay('Elegiste el <strong>' + fechaLarga(f) + '</strong>. ¿Confirmas esta fecha?', SI_NO);
+            await botSay(tpl(CFG.cita.confirmFecha, { fecha: fechaLarga(f) }), SI_NO);
             break;
           }
           case 'cita_fecha_confirm':
             if (esSi(t)){
               state.step = 'cita_periodo';
-              await botSay('¿Prefieres horario de <strong>mañana</strong> o de <strong>tarde</strong>?', [
+              await botSay(CFG.cita.qPeriodo, [
                 { label: 'Mañana', send: 'Mañana' }, { label: 'Tarde', send: 'Tarde' }
               ]);
             } else if (esNo(t)){
               state.step = 'cita_fecha';
-              await botSay('Sin problema. ¿Qué <strong>fecha</strong> prefieres entonces?', []);
+              await botSay(CFG.cita.fechaOtra, []);
             } else {
-              await botSay('Por favor responde <strong>Sí</strong> o <strong>No</strong>: ¿confirmas el ' + fechaLarga(c.fecha) + '?', SI_NO);
+              await botSay(tpl(CFG.cita.errConfirmFecha, { fecha: fechaLarga(c.fecha) }), SI_NO);
             }
             break;
           case 'cita_periodo':
             if (t.indexOf('manana') !== -1){
               c.periodo = 'mañana'; c.periodoKey = 'manana';
               state.step = 'cita_periodo_confirm';
-              await botSay('Elegiste horario de <strong>mañana</strong>. ¿Confirmas?', SI_NO);
+              await botSay(tpl(CFG.cita.confirmPeriodo, { periodo: 'mañana' }), SI_NO);
             } else if (t.indexOf('tarde') !== -1){
               c.periodo = 'tarde'; c.periodoKey = 'tarde';
               state.step = 'cita_periodo_confirm';
-              await botSay('Elegiste horario de <strong>tarde</strong>. ¿Confirmas?', SI_NO);
+              await botSay(tpl(CFG.cita.confirmPeriodo, { periodo: 'tarde' }), SI_NO);
             } else {
-              await botSay('Elige una opción: ¿<strong>mañana</strong> o <strong>tarde</strong>?', [
+              await botSay(CFG.cita.errPeriodo, [
                 { label: 'Mañana', send: 'Mañana' }, { label: 'Tarde', send: 'Tarde' }
               ]);
             }
@@ -753,21 +972,21 @@
               await botSay(textoHoras(c.periodoKey), quickHoras(c.periodoKey));
             } else if (esNo(t)){
               state.step = 'cita_periodo';
-              await botSay('De acuerdo. ¿Prefieres <strong>mañana</strong> o <strong>tarde</strong>?', [
+              await botSay(CFG.cita.periodoOtro, [
                 { label: 'Mañana', send: 'Mañana' }, { label: 'Tarde', send: 'Tarde' }
               ]);
             } else {
-              await botSay('Por favor responde <strong>Sí</strong> o <strong>No</strong>: ¿confirmas el horario de ' + c.periodo + '?', SI_NO);
+              await botSay(tpl(CFG.cita.errConfirmPeriodo, { periodo: c.periodo }), SI_NO);
             }
             break;
           case 'cita_hora': {
             var slot = parseHora(raw, c.periodoKey);
             if (slot === 'fuera' || slot === null){
               flags.fechaValida = true; renderPanel();
-              await botSay('Esa hora no está entre las opciones disponibles. ' + textoHoras(c.periodoKey), quickHoras(c.periodoKey));
+              await botSay(CFG.cita.errHora + ' ' + textoHoras(c.periodoKey), quickHoras(c.periodoKey));
             } else if (slot.ocupada){
               flags.fechaValida = true; renderPanel();
-              await botSay('Ese horario (<strong>' + slot.label + '</strong>) ya está ocupado. Elige uno de los horarios disponibles:', quickHoras(c.periodoKey));
+              await botSay(tpl(CFG.cita.errHoraOcupada, { hora: esc(slot.label) }), quickHoras(c.periodoKey));
             } else {
               c.hora = slot.label;
               await completarCita();
@@ -786,9 +1005,9 @@
         state.step = 'menu';
         setBranch('Rama 1 · Cita registrada (PENDING)');
         await botSay([
-          '¡Listo! ✅ Ya tengo la <strong>información inicial</strong> de tu cita.',
-          '<strong>Resumen de la cita</strong><br>• Paciente: ' + esc(c.paciente) + ' (' + esc(c.edad) + ' años)<br>• Servicio: ' + esc(c.servicio) + '<br>• Sede: ' + esc(c.sede) + '<br>• Fecha: ' + fechaLarga(c.fecha) + '<br>• Hora: ' + c.hora,
-          'El equipo de recepción o la profesional encargada te dará <strong>seguimiento</strong> para confirmarla. ¡Gracias por contactar a CEPAVAL!'
+          CFG.cita.finalOk,
+          '<strong>Resumen de la cita</strong><br>• Paciente: ' + esc(c.paciente) + ' (' + esc(c.edad) + ' años)<br>• Servicio: ' + esc(c.servicio) + '<br>• Sede: ' + esc(c.sede) + '<br>• Fecha: ' + fechaLarga(c.fecha) + '<br>• Hora: ' + esc(c.hora),
+          CFG.cita.finalSeguimiento
         ], [{ label: 'Volver al menú', send: 'menu' }, { label: 'Agendar otra cita', send: 'Agendar cita' }]);
       }
 
@@ -799,11 +1018,7 @@
         var sv = detectarServicio(tInicial || '');
         if (sv){ await explicarServicio(sv); return; }
         state.step = 'servicio_info';
-        await botSay('Con gusto te cuento sobre nuestros servicios. ¿Sobre cuál deseas información?', [
-          { label: 'Fonoaudiología', send: 'Fonoaudiología' },
-          { label: 'Terapia Ocupacional', send: 'Terapia ocupacional' },
-          { label: 'Psicología', send: 'Psicología' }
-        ]);
+        await botSay(CFG.servicios.pregunta, quickServicios());
       }
       async function explicarServicio(sv){
         flags.info.servicios = true; renderPanel();
@@ -822,11 +1037,7 @@
         state.precio = {};
         state.step = 'precio_servicio';
         setBranch('Rama 3 · Precios');
-        await botSay('Para ayudarte con el precio, cuéntame: ¿de qué <strong>servicio</strong> deseas saber el costo?', [
-          { label: 'Fonoaudiología', send: 'Fonoaudiología' },
-          { label: 'Terapia Ocupacional', send: 'Terapia ocupacional' },
-          { label: 'Psicología', send: 'Psicología' }
-        ]);
+        await botSay(CFG.precios.qServicio, quickServicios());
       }
       async function pasoPrecio(raw, t){
         var p = state.precio;
@@ -835,16 +1046,13 @@
             var sv = detectarServicio(t);
             p.servicio = sv ? sv.nombre : raw;
             state.step = 'precio_sede';
-            await botSay('¿En qué <strong>sede</strong>?', [
-              { label: 'Marbella', send: 'Marbella' },
-              { label: 'Costa del Este', send: 'Costa del Este' }
-            ]);
+            await botSay(CFG.precios.qSede, quickSedes());
             break;
           }
           case 'precio_sede':
             p.sede = detectarSede(t) || raw;
             state.step = 'precio_modalidad';
-            await botSay('¿Es para una <strong>evaluación</strong> o para <strong>terapia</strong>?', [
+            await botSay(CFG.precios.qModalidad, [
               { label: 'Evaluación', send: 'Evaluación' },
               { label: 'Terapia', send: 'Terapia' }
             ]);
@@ -852,7 +1060,7 @@
           case 'precio_modalidad':
             p.modalidad = t.indexOf('evaluacion') !== -1 ? 'Evaluación' : (t.indexOf('terapia') !== -1 ? 'Terapia' : raw);
             state.step = 'precio_tipo';
-            await botSay('¿El paciente es <strong>niño, adolescente o adulto</strong>?', [
+            await botSay(CFG.precios.qTipo, [
               { label: 'Niño', send: 'Niño' },
               { label: 'Adolescente', send: 'Adolescente' },
               { label: 'Adulto', send: 'Adulto' }
@@ -864,7 +1072,7 @@
             derivar('Consulta de precios → recepción (' + p.servicio + ', ' + p.sede + ', ' + p.modalidad + ', ' + p.tipo + ')');
             state.step = 'menu';
             setBranch('Rama 3 · Precios (derivada a recepción)');
-            await botSay('Gracias. Paso tu consulta a <strong>recepción</strong> para que te confirmen el <strong>costo actualizado</strong>, ya que depende de la sede, el servicio, la modalidad (' + esc(p.modalidad.toLowerCase()) + ') y la profesional. Te contactarán a este número. 💬',
+            await botSay(tpl(CFG.precios.derivacion, { modalidad: esc(p.modalidad.toLowerCase()) }),
               [{ label: 'Volver al menú', send: 'menu' }, { label: 'Agendar cita', send: 'Agendar cita' }]);
             break;
           }
@@ -882,24 +1090,22 @@
         flags.ramas['5'] = true; renderPanel();
         state.step = 'paciente_menu';
         setBranch('Rama 5 · Ya soy paciente');
-        await botSay('Claro, ya eres paciente de CEPAVAL. ¿Qué necesitas hacer?', PACIENTE_QUICK);
+        await botSay(CFG.paciente.menuTexto, PACIENTE_QUICK);
       }
       async function infoPagos(){
         flags.info.pagos = true; renderPanel();
         state.step = 'paciente_menu';
-        await botSay('<strong>Formas de pago</strong> 💳<br>• Aceptamos <strong>tarjetas</strong> y <strong>transferencias</strong>.<br>• <strong>No aceptamos efectivo.</strong><br>• No trabajamos con seguros de forma directa, pero te entregamos los <strong>formularios y facturas</strong> para que solicites el reembolso a tu aseguradora.',
-          PACIENTE_QUICK);
+        await botSay(CFG.paciente.pagos, PACIENTE_QUICK);
       }
       async function infoPolitica(){
         state.step = 'paciente_menu';
-        await botSay('<strong>Política de cancelación</strong><br>Las citas deben cancelarse con al menos <strong>6 horas de anticipación</strong>. Así podemos ofrecer el espacio a otra familia.',
-          PACIENTE_QUICK);
+        await botSay(tpl(CFG.paciente.politica, { horas: CFG.paciente.horasMinimas }), PACIENTE_QUICK);
       }
       async function iniciarCancelacion(){
         flags.ramas['5'] = true; renderPanel();
         state.step = 'cancelar_nombre';
         setBranch('Rama 5 · Cancelar cita');
-        await botSay('Para buscar la cita, dime el <strong>nombre y apellido del paciente</strong>.', []);
+        await botSay(CFG.paciente.cancel.qNombre, []);
       }
       async function pasoCancelarNombre(raw){
         var buscado = norm(raw);
@@ -909,7 +1115,7 @@
           derivar('Cancelación con registro duplicado → recepción');
           state.step = 'menu';
           setBranch('Rama 5 · Cancelar cita (duplicado)');
-          await botSay('Encontré <strong>más de un paciente</strong> registrado con el nombre «' + esc(raw) + '». Para no cancelar la cita equivocada, paso tu caso a <strong>recepción</strong>, que te ayudará a identificar el registro correcto.',
+          await botSay(tpl(CFG.paciente.cancel.duplicado, { nombre: esc(raw) }),
             [{ label: 'Volver al menú', send: 'menu' }]);
           return;
         }
@@ -918,48 +1124,53 @@
           derivar('Cancelación: paciente no encontrado → recepción');
           renderPanel();
           state.step = 'cancelar_nombre';
-          await botSay('No encontré ningún paciente registrado con el nombre «' + esc(raw) + '». Revisa que esté escrito igual que en el registro e inténtalo de nuevo; si necesitas ayuda, escribo a recepción por ti.',
+          await botSay(tpl(CFG.paciente.cancel.noEncontrado, { nombre: esc(raw) }),
             [{ label: 'Pedir ayuda a recepción', send: 'Recepción' }, { label: 'Volver al menú', send: 'menu' }]);
           return;
         }
         var pac = matches[0];
+        var CC = CFG.paciente.cancel;
         if (pac.tipo === 'sinCitas'){
           flags.cancel.sinCitas = true; renderPanel();
           state.step = 'menu';
           setBranch('Rama 5 · Cancelar cita (sin citas activas)');
-          await botSay('<strong>' + esc(pac.nombre) + '</strong> está registrado/a, pero <strong>no tiene citas activas</strong> para cancelar. Si crees que es un error, recepción puede revisarlo.',
+          await botSay(tpl(CC.sinCitas, { nombre: esc(pac.nombre) }),
             [{ label: 'Hablar con recepción', send: 'Recepción' }, { label: 'Volver al menú', send: 'menu' }]);
           return;
         }
-        if (state.ejemploCancelada){
+        if (state.canceladas[buscado]){
           flags.cancel.sinCitas = true; renderPanel();
           state.step = 'menu';
-          await botSay('La cita de <strong>' + esc(pac.nombre) + '</strong> ya fue cancelada antes en esta simulación, así que no tiene citas activas.',
+          setBranch('Rama 5 · Cancelar cita (sin citas activas)');
+          await botSay(tpl(CC.yaCancelada, { nombre: esc(pac.nombre) }),
             [{ label: 'Volver al menú', send: 'menu' }]);
           return;
         }
         state.cancelTarget = pac;
         state.step = 'cancelar_confirm';
-        var ce = citaEjemplo();
-        await botSay('Encontré esta cita activa de <strong>' + esc(pac.nombre) + '</strong>:<br>• Servicio: ' + ce.servicio + '<br>• Sede: ' + ce.sede + '<br>• Fecha: ' + ce.fechaTxt + '<br>• Hora: ' + ce.hora + '<br><br>¿Confirmas que deseas <strong>cancelarla</strong>?', SI_NO);
+        var ce = citaEjemplo(pac);
+        await botSay(tpl(CC.encontradaIntro, { nombre: esc(pac.nombre) }) +
+          '<br>• Servicio: ' + esc(ce.servicio) + '<br>• Sede: ' + esc(ce.sede) +
+          '<br>• Fecha: ' + ce.fechaTxt + '<br>• Hora: ' + esc(ce.hora) +
+          '<br><br>' + CC.confirmPregunta, SI_NO);
       }
       async function pasoCancelarConfirm(t){
         var pac = state.cancelTarget;
+        var CC = CFG.paciente.cancel;
         if (esSi(t)){
           flags.cancel.confirmada = true;
-          state.ejemploCancelada = true;
-          state.citaEstado = state.citaEstado; // se mantiene la cita de la sesión si existe
+          state.canceladas[norm(pac.nombre)] = true;
           state.step = 'menu';
           setBranch('Rama 5 · Cita cancelada (CANCELLED)');
           renderPanel();
-          await botSay('Listo. La cita de <strong>' + esc(pac.nombre) + '</strong> quedó <strong>cancelada</strong>. Si deseas reprogramarla, con gusto agendamos una nueva.',
+          await botSay(tpl(CC.okCancelada, { nombre: esc(pac.nombre) }),
             [{ label: 'Agendar nueva cita', send: 'Agendar cita' }, { label: 'Volver al menú', send: 'menu' }]);
         } else if (esNo(t)){
           state.step = 'menu';
-          await botSay('De acuerdo, <strong>no cancelé</strong> la cita. Sigue activa. 👍',
+          await botSay(CC.noCancelada,
             [{ label: 'Volver al menú', send: 'menu' }]);
         } else {
-          await botSay('Por favor responde <strong>Sí</strong> para cancelar la cita o <strong>No</strong> para mantenerla.', SI_NO);
+          await botSay(CC.errConfirm, SI_NO);
         }
         state.cancelTarget = null;
       }
@@ -1022,11 +1233,11 @@
         switch (state.step){
           case 'start':
             state.step = 'menu';
-            await botSay('¡Hola! 👋 Bienvenido/a a <strong>CEPAVAL</strong>. Soy el asistente virtual y te ayudo con citas, servicios, precios y más.', []);
+            await botSay(CFG.general.saludo, []);
             await mostrarMenu(null);
             return;
           case 'human':
-            await botSay('Tu caso ya está con el equipo de CEPAVAL y una persona te responderá pronto. 🙌<br><br>Si quieres volver al asistente automático, escribe <strong>menu</strong>.',
+            await botSay(CFG.deriv.seguimiento,
               [{ label: 'Volver al asistente (menu)', send: 'menu' }]);
             return;
           case 'menu':
@@ -1034,11 +1245,7 @@
           case 'servicio_info': {
             var sv = detectarServicio(t);
             if (sv) await explicarServicio(sv);
-            else await botSay('Puedo ayudarte con <strong>Fonoaudiología</strong>, <strong>Terapia Ocupacional</strong> o <strong>Psicología</strong>. ¿Cuál te interesa?', [
-              { label: 'Fonoaudiología', send: 'Fonoaudiología' },
-              { label: 'Terapia Ocupacional', send: 'Terapia ocupacional' },
-              { label: 'Psicología', send: 'Psicología' }
-            ]);
+            else await botSay(CFG.servicios.reintento, quickServicios());
             return;
           }
           case 'paciente_menu':
@@ -1074,7 +1281,7 @@
         /* No entendido */
         state.step = 'menu';
         setBranch('Menú principal');
-        await botSay('Disculpa, no entendí tu mensaje. 🙏 Puedo ayudarte con esto:', []);
+        await botSay(CFG.general.noEntendido, []);
         await mostrarMenu(null);
       }
 
@@ -1083,7 +1290,7 @@
         if (t.indexOf('politica') !== -1){ await infoPolitica(); return; }
         if (t.indexOf('recepcion') !== -1 || t.indexOf('persona') !== -1){ await derivarPersona('Paciente actual → recepción / profesional'); return; }
         if (t.indexOf('agendar') !== -1 || t === '1'){ await iniciarCita(); return; }
-        await botSay('Puedo ayudarte con: <strong>cancelar cita</strong>, <strong>pagos</strong>, <strong>política de cancelación</strong> o pasar tu caso a <strong>recepción</strong>. ¿Qué necesitas?', PACIENTE_QUICK);
+        await botSay(CFG.paciente.menuAyuda, PACIENTE_QUICK);
       }
 
       /* ================= Reinicio y cierre ================= */
@@ -1094,7 +1301,7 @@
         lastWho = null;
         var box = document.createElement('div');
         box.className = 'closed-box';
-        box.innerHTML = '<div class="big">Chat cerrado 🔒</div><p>La conversación de prueba terminó (comando «cerrar chat»).</p>';
+        box.innerHTML = '<div class="big">Chat cerrado 🔒</div><p>' + esc(CFG.general.cierre) + '</p>';
         var b = document.createElement('button');
         b.className = 'btn-primary';
         b.textContent = 'Iniciar nueva conversación';
@@ -1126,14 +1333,20 @@
         ubicacion: ['hola', '4'],
         paciente: ['hola', '5'],
         persona: ['hola', '6'],
-        cancelar: ['hola', 'cancelar cita', 'Sofía Herrera'],
         emergencia: ['hola', 'Mi hijo tiene convulsiones'],
         diagnostico: ['¿Qué tiene mi hijo?'],
         reiniciar: []
       };
       document.querySelectorAll('[data-shortcut]').forEach(function(btn){
         btn.addEventListener('click', function(){
-          var seq = SHORTCUTS[btn.getAttribute('data-shortcut')] || [];
+          var key = btn.getAttribute('data-shortcut');
+          var seq;
+          if (key === 'cancelar'){
+            var ej = primerPacienteActivo();
+            seq = ej ? ['hola', 'cancelar cita', ej.nombre] : ['hola', 'cancelar cita'];
+          } else {
+            seq = SHORTCUTS[key] || [];
+          }
           resetSimulacion();
           seq.forEach(function(m){ sendUser(m); });
         });
@@ -1147,6 +1360,464 @@
         sendUser(v);
       });
 
+      /* ================= EDITOR DEL FLUJO ================= */
+      var LIST_DEFS = {
+        'servicios.lista': {
+          titulo: 'Servicio', agregar: '＋ Agregar servicio',
+          campos: [
+            { k: 'nombre', label: 'Nombre del servicio', tipo: 'text' },
+            { k: 'palabras', label: 'Palabras clave para detectarlo (separadas por comas)', tipo: 'text' },
+            { k: 'texto', label: 'Explicación que muestra el bot', tipo: 'area' }
+          ]
+        },
+        'sedes.lista': {
+          titulo: 'Sede', agregar: '＋ Agregar sede',
+          campos: [
+            { k: 'nombre', label: 'Nombre de la sede', tipo: 'text' },
+            { k: 'textoLista', label: 'Texto en la lista de sedes (dirección y horario, en breve)', tipo: 'area' },
+            { k: 'textoDetalle', label: 'Texto al elegir esta sede (dirección y horario completos)', tipo: 'area' }
+          ]
+        },
+        'paciente.lista': {
+          titulo: 'Paciente de ejemplo', agregar: '＋ Agregar paciente de ejemplo',
+          campos: [
+            { k: 'nombre', label: 'Nombre y apellido', tipo: 'text' },
+            { k: 'tipo', label: 'Situación en el registro', tipo: 'select', opciones: [
+              { v: 'activa', l: 'Con cita activa (se puede cancelar)' },
+              { v: 'duplicado', l: 'Duplicado (aparece más de una vez)' },
+              { v: 'sinCitas', l: 'Registrado, sin citas activas' }
+            ]},
+            { k: 'servicio', label: 'Servicio de su cita (solo si tiene cita activa)', tipo: 'text' },
+            { k: 'sede', label: 'Sede de su cita', tipo: 'text' },
+            { k: 'hora', label: 'Hora de su cita (ej.: 10:00 a. m.)', tipo: 'text' },
+            { k: 'nota', label: 'Nota que se muestra en «Datos de simulación»', tipo: 'area' }
+          ]
+        }
+      };
+      var GRUPOS = [
+        { titulo: 'General', campos: [
+          { path: 'general.saludo', label: 'Saludo inicial', tipo: 'area' },
+          { path: 'general.menuIntro', label: 'Texto que introduce el menú', tipo: 'text' },
+          { path: 'general.op1', label: 'Etiqueta opción 1', tipo: 'text' },
+          { path: 'general.op2', label: 'Etiqueta opción 2', tipo: 'text' },
+          { path: 'general.op3', label: 'Etiqueta opción 3', tipo: 'text' },
+          { path: 'general.op4', label: 'Etiqueta opción 4', tipo: 'text' },
+          { path: 'general.op5', label: 'Etiqueta opción 5', tipo: 'text' },
+          { path: 'general.op6', label: 'Etiqueta opción 6', tipo: 'text' },
+          { path: 'general.menuPie', label: 'Texto al final del menú', tipo: 'text' },
+          { path: 'general.noEntendido', label: 'Mensaje cuando el bot no entiende', tipo: 'area' },
+          { path: 'general.volverMenu', label: 'Mensaje al volver al menú (comandos menu / salir)', tipo: 'text' },
+          { path: 'general.cierre', label: 'Mensaje al cerrar el chat', tipo: 'text' }
+        ]},
+        { titulo: 'Agendar cita', campos: [
+          { path: 'cita.inicio', label: 'Inicio y pregunta del acudiente', tipo: 'area' },
+          { path: 'cita.qTelefono', label: 'Pregunta: teléfono de contacto · {acudiente}', tipo: 'area' },
+          { path: 'cita.qPaciente', label: 'Pregunta: nombre del paciente', tipo: 'area' },
+          { path: 'cita.qEdad', label: 'Pregunta: edad · {paciente}', tipo: 'area' },
+          { path: 'cita.errEdad', label: 'Error: la edad no está solo en números', tipo: 'area' },
+          { path: 'cita.qMotivo', label: 'Pregunta: motivo de consulta', tipo: 'area' },
+          { path: 'cita.qServicio', label: 'Pregunta: servicio', tipo: 'area' },
+          { path: 'cita.qSede', label: 'Pregunta: sede', tipo: 'area' },
+          { path: 'cita.qDocumentos', label: 'Pregunta: documentos o evaluaciones previas', tipo: 'area' },
+          { path: 'cita.qReferencia', label: 'Pregunta: cómo conoció CEPAVAL', tipo: 'area' },
+          { path: 'cita.qFecha', label: 'Pregunta: fecha · {ejemplo}', tipo: 'area' },
+          { path: 'cita.errFecha', label: 'Error: fecha no se pudo leer · {ejemplo}', tipo: 'area' },
+          { path: 'cita.errFechaPasada', label: 'Error: la fecha ya pasó', tipo: 'area' },
+          { path: 'cita.confirmFecha', label: 'Confirmación de fecha · {fecha}', tipo: 'area' },
+          { path: 'cita.errConfirmFecha', label: 'Error: no respondió Sí/No a la fecha · {fecha}', tipo: 'area' },
+          { path: 'cita.fechaOtra', label: 'Si no confirma la fecha: pedir otra', tipo: 'area' },
+          { path: 'cita.qPeriodo', label: 'Pregunta: mañana o tarde', tipo: 'area' },
+          { path: 'cita.confirmPeriodo', label: 'Confirmación de período · {periodo}', tipo: 'area' },
+          { path: 'cita.errPeriodo', label: 'Error: no eligió mañana ni tarde', tipo: 'area' },
+          { path: 'cita.errConfirmPeriodo', label: 'Error: no respondió Sí/No al período · {periodo}', tipo: 'area' },
+          { path: 'cita.periodoOtro', label: 'Si no confirma el período: preguntar de nuevo', tipo: 'area' },
+          { path: 'cita.horasIntro', label: 'Lista de horarios · {turno} y {lista}', tipo: 'area' },
+          { path: 'cita.errHora', label: 'Error: hora fuera de las opciones (se añade la lista)', tipo: 'area' },
+          { path: 'cita.errHoraOcupada', label: 'Error: hora ocupada · {hora}', tipo: 'area' },
+          { path: 'cita.finalOk', label: 'Mensaje final: cita registrada', tipo: 'area' },
+          { path: 'cita.finalSeguimiento', label: 'Mensaje final: seguimiento de recepción (la cita queda PENDING)', tipo: 'area' }
+        ]},
+        { titulo: 'Servicios', campos: [
+          { path: 'servicios.pregunta', label: 'Pregunta cuando no se detecta un servicio', tipo: 'area' },
+          { path: 'servicios.reintento', label: 'Respuesta si sigue sin detectarse el servicio', tipo: 'area' }
+        ], lista: 'servicios.lista' },
+        { titulo: 'Precios', campos: [
+          { path: 'precios.qServicio', label: 'Pregunta: servicio', tipo: 'area' },
+          { path: 'precios.qSede', label: 'Pregunta: sede', tipo: 'area' },
+          { path: 'precios.qModalidad', label: 'Pregunta: evaluación o terapia', tipo: 'area' },
+          { path: 'precios.qTipo', label: 'Pregunta: niño, adolescente o adulto', tipo: 'area' },
+          { path: 'precios.derivacion', label: 'Derivación a recepción (sin dar precio) · {modalidad}', tipo: 'area' }
+        ]},
+        { titulo: 'Ubicación y horarios (sedes)', campos: [
+          { path: 'sedes.intro', label: 'Texto que introduce la lista de sedes', tipo: 'text' },
+          { path: 'sedes.pie', label: 'Texto al final de la lista de sedes', tipo: 'area' }
+        ], lista: 'sedes.lista' },
+        { titulo: 'Ya soy paciente', campos: [
+          { path: 'paciente.menuTexto', label: 'Saludo de la rama', tipo: 'area' },
+          { path: 'paciente.menuAyuda', label: 'Ayuda si no se entiende la opción', tipo: 'area' },
+          { path: 'paciente.pagos', label: 'Texto de pagos', tipo: 'area' },
+          { path: 'paciente.politica', label: 'Texto de política de cancelación · {horas}', tipo: 'area' },
+          { path: 'paciente.horasMinimas', label: 'Horas mínimas para cancelar (número)', tipo: 'number' },
+          { path: 'paciente.cancel.qNombre', label: 'Cancelación · pregunta: nombre del paciente', tipo: 'area' },
+          { path: 'paciente.cancel.noEncontrado', label: 'Cancelación · paciente no encontrado · {nombre}', tipo: 'area' },
+          { path: 'paciente.cancel.duplicado', label: 'Cancelación · registro duplicado · {nombre}', tipo: 'area' },
+          { path: 'paciente.cancel.sinCitas', label: 'Cancelación · sin citas activas · {nombre}', tipo: 'area' },
+          { path: 'paciente.cancel.yaCancelada', label: 'Cancelación · la cita ya estaba cancelada · {nombre}', tipo: 'area' },
+          { path: 'paciente.cancel.encontradaIntro', label: 'Cancelación · cita encontrada (antes del detalle) · {nombre}', tipo: 'area' },
+          { path: 'paciente.cancel.confirmPregunta', label: 'Cancelación · pregunta de confirmación', tipo: 'area' },
+          { path: 'paciente.cancel.okCancelada', label: 'Cancelación · confirmada (queda CANCELLED) · {nombre}', tipo: 'area' },
+          { path: 'paciente.cancel.noCancelada', label: 'Cancelación · el usuario decide no cancelar', tipo: 'area' },
+          { path: 'paciente.cancel.errConfirm', label: 'Cancelación · error al confirmar (no dijo Sí/No)', tipo: 'area' }
+        ], lista: 'paciente.lista' },
+        { titulo: 'Hablar con persona y derivaciones', campos: [
+          { path: 'deriv.persona1', label: 'Derivación a recepción · mensaje 1', tipo: 'area' },
+          { path: 'deriv.persona2', label: 'Derivación a recepción · mensaje 2', tipo: 'area' },
+          { path: 'deriv.seguimiento', label: 'Si escribe de nuevo estando con una persona', tipo: 'area' },
+          { path: 'deriv.emergencia1', label: 'Emergencia a urgencias · mensaje 1', tipo: 'area' },
+          { path: 'deriv.emergencia2', label: 'Emergencia a urgencias · mensaje 2', tipo: 'area' },
+          { path: 'deriv.diagnostico1', label: 'No-diagnóstico · mensaje 1', tipo: 'area' },
+          { path: 'deriv.diagnostico2', label: 'No-diagnóstico · mensaje 2', tipo: 'area' }
+        ]},
+        { titulo: 'Horarios de citas', campos: [
+          { path: 'horarios.mananaDisponibles', label: 'Mañana · horas disponibles (una por línea)', tipo: 'lineas' },
+          { path: 'horarios.mananaOcupadas', label: 'Mañana · horas ocupadas (una por línea)', tipo: 'lineas' },
+          { path: 'horarios.tardeDisponibles', label: 'Tarde · horas disponibles (una por línea)', tipo: 'lineas' },
+          { path: 'horarios.tardeOcupadas', label: 'Tarde · horas ocupadas (una por línea)', tipo: 'lineas' }
+        ]}
+      ];
+
+      var editorForm = document.getElementById('editorForm');
+      var editorRendered = false;
+
+      function campoHTML(c, valor){
+        var v = valor == null ? '' : valor;
+        var inner;
+        if (c.tipo === 'area'){
+          inner = '<textarea data-path="' + c.path + '" data-tipo="area">' + esc(v) + '</textarea>';
+        } else if (c.tipo === 'lineas'){
+          inner = '<textarea data-path="' + c.path + '" data-tipo="lineas">' + esc((v || []).join('\n')) + '</textarea>';
+        } else if (c.tipo === 'number'){
+          inner = '<input type="number" min="0" step="1" data-path="' + c.path + '" data-tipo="number" value="' + esc(v) + '" />';
+        } else {
+          inner = '<input type="text" data-path="' + c.path + '" data-tipo="text" value="' + esc(v) + '" />';
+        }
+        return '<div class="ed-field"><label>' + esc(c.label) + '</label>' + inner + '</div>';
+      }
+      function itemHTML(listPath, item, idx){
+        var def = LIST_DEFS[listPath];
+        var h = '<div class="ed-item" data-item="' + idx + '">';
+        h += '<div class="ed-item-head"><span>' + esc(def.titulo) + ' ' + (idx + 1) + (item.nombre ? ' · ' + esc(item.nombre) : '') + '</span>' +
+             '<button type="button" class="btn-ghost small danger" data-remove="' + listPath + '" data-idx="' + idx + '">Quitar</button></div>';
+        def.campos.forEach(function(cf){
+          var v = item[cf.k] == null ? '' : item[cf.k];
+          if (cf.tipo === 'select'){
+            var opts = cf.opciones.map(function(o){
+              return '<option value="' + esc(o.v) + '"' + (o.v === v ? ' selected' : '') + '>' + esc(o.l) + '</option>';
+            }).join('');
+            h += '<div class="ed-field"><label>' + esc(cf.label) + '</label><select data-lfield="' + cf.k + '">' + opts + '</select></div>';
+          } else if (cf.tipo === 'area'){
+            h += '<div class="ed-field"><label>' + esc(cf.label) + '</label><textarea data-lfield="' + cf.k + '">' + esc(v) + '</textarea></div>';
+          } else {
+            h += '<div class="ed-field"><label>' + esc(cf.label) + '</label><input type="text" data-lfield="' + cf.k + '" value="' + esc(v) + '" /></div>';
+          }
+        });
+        h += '</div>';
+        return h;
+      }
+      function listaHTML(listPath, arr){
+        var def = LIST_DEFS[listPath];
+        var h = '<div data-list="' + listPath + '">';
+        (arr || []).forEach(function(item, idx){ h += itemHTML(listPath, item, idx); });
+        h += '<button type="button" class="btn-ghost small" data-add="' + listPath + '">' + esc(def.agregar) + '</button></div>';
+        return h;
+      }
+      function renderEditor(cfg){
+        var h = '';
+        GRUPOS.forEach(function(g, gi){
+          h += '<details class="ed-group"' + (gi === 0 ? ' open' : '') + '><summary>' + esc(g.titulo) + '</summary>';
+          g.campos.forEach(function(c){ h += campoHTML(c, getPath(cfg, c.path)); });
+          if (g.lista) h += listaHTML(g.lista, getPath(cfg, g.lista) || []);
+          h += '</details>';
+        });
+        editorForm.innerHTML = h;
+        editorRendered = true;
+      }
+      function collectEditor(){
+        var out = clone(CFG);
+        editorForm.querySelectorAll('[data-path]').forEach(function(el){
+          var path = el.getAttribute('data-path');
+          var tipo = el.getAttribute('data-tipo');
+          if (tipo === 'lineas'){
+            setPath(out, path, el.value.split('\n').map(function(s){ return s.trim(); }).filter(function(s){ return !!s; }));
+          } else if (tipo === 'number'){
+            var n = parseFloat(el.value);
+            if (!isNaN(n)) setPath(out, path, n);
+          } else {
+            setPath(out, path, el.value);
+          }
+        });
+        editorForm.querySelectorAll('[data-list]').forEach(function(cont){
+          var listPath = cont.getAttribute('data-list');
+          var items = [];
+          cont.querySelectorAll('[data-item]').forEach(function(itemEl){
+            var item = {};
+            itemEl.querySelectorAll('[data-lfield]').forEach(function(f){
+              item[f.getAttribute('data-lfield')] = f.value;
+            });
+            if (String(item.nombre || '').trim()) items.push(item);
+          });
+          setPath(out, listPath, items);
+        });
+        return out;
+      }
+
+      /* ---------- Diff contra la configuración de fábrica ---------- */
+      function aplanar(obj, prefijo, out){
+        Object.keys(obj).forEach(function(k){
+          var p = prefijo ? prefijo + '.' + k : k;
+          var v = obj[k];
+          if (Array.isArray(v)){
+            if (!v.length || typeof v[0] !== 'object' || v[0] === null){ out[p] = JSON.stringify(v); }
+            else v.forEach(function(item, i){ aplanar(item, p + '.' + i, out); });
+          } else if (v !== null && typeof v === 'object'){
+            aplanar(v, p, out);
+          } else {
+            out[p] = String(v);
+          }
+        });
+        return out;
+      }
+      var LABELS = {};
+      GRUPOS.forEach(function(g){
+        g.campos.forEach(function(c){ LABELS[c.path] = g.titulo + ' · ' + c.label; });
+      });
+      function etiquetaDe(path){
+        if (LABELS[path]) return LABELS[path];
+        var m = path.match(/^(servicios\.lista|sedes\.lista|paciente\.lista)\.(\d+)\.(.+)$/);
+        if (m){
+          var def = LIST_DEFS[m[1]];
+          var item = (getPath(CFG, m[1]) || [])[+m[2]] || (getPath(FABRICA, m[1]) || [])[+m[2]] || {};
+          var cf = null;
+          def.campos.forEach(function(c){ if (c.k === m[3]) cf = c; });
+          return def.titulo + (item.nombre ? ' «' + item.nombre + '»' : ' #' + (+m[2] + 1)) + (cf ? ' · ' + cf.label : '');
+        }
+        return path;
+      }
+      function cambiosActuales(){
+        var a = aplanar(FABRICA, '', {});
+        var b = aplanar(CFG, '', {});
+        var keys = {}, cambios = [];
+        Object.keys(a).forEach(function(k){ keys[k] = true; });
+        Object.keys(b).forEach(function(k){ keys[k] = true; });
+        Object.keys(keys).forEach(function(k){
+          if (a[k] !== b[k]) cambios.push(etiquetaDe(k));
+        });
+        return cambios;
+      }
+      function updateDiffUI(){
+        var cambios = cambiosActuales();
+        var line = document.getElementById('diffLine');
+        var list = document.getElementById('diffList');
+        var exportado = lastExportedJSON !== null && JSON.stringify(CFG) === lastExportedJSON;
+        list.innerHTML = '';
+        if (!cambios.length){
+          line.textContent = 'Sin cambios respecto a la versión de fábrica.';
+          line.className = 'diff-line';
+          list.hidden = true;
+          return;
+        }
+        line.textContent = exportado
+          ? '✓ ' + cambios.length + ' cambio(s) respecto a la versión de fábrica, ya exportados en JSON.'
+          : '⚠️ Tienes ' + cambios.length + ' cambio(s) sin exportar respecto a la versión de fábrica:';
+        line.className = 'diff-line' + (exportado ? '' : ' warn');
+        cambios.slice(0, 14).forEach(function(c){
+          var li = document.createElement('li');
+          li.textContent = c;
+          list.appendChild(li);
+        });
+        if (cambios.length > 14){
+          var li2 = document.createElement('li');
+          li2.textContent = '…y ' + (cambios.length - 14) + ' más.';
+          list.appendChild(li2);
+        }
+        list.hidden = exportado;
+      }
+
+      /* ---------- Aplicar / importar / restablecer ---------- */
+      function editorMsg(txt, ok){
+        var m = document.getElementById('editorMsg');
+        m.textContent = txt;
+        m.className = 'editor-msg ' + (ok ? 'ok' : 'err');
+      }
+      function importMsg(txt, ok){
+        var m = document.getElementById('importMsg');
+        m.textContent = txt;
+        m.className = 'editor-msg ' + (ok ? 'ok' : 'err');
+      }
+      /* Limpieza de textos de la configuración: solo se permiten <strong> y <br>
+         (las etiquetas documentadas en el editor). Así, un JSON importado con
+         HTML malicioso no puede ejecutar código en el navegador de nadie. */
+      function limpiarHTML(s){
+        var BR = '\u0001', SO = '\u0002', SC = '\u0003';
+        var t = String(s);
+        t = t.replace(/<br\s*\/?>/gi, BR);
+        t = t.replace(/<strong>/gi, SO).replace(/<\/strong>/gi, SC);
+        t = esc(t);
+        return t.split(BR).join('<br>').split(SO).join('<strong>').split(SC).join('</strong>');
+      }
+      function limpiarCfg(obj){
+        if (Array.isArray(obj)){ obj.forEach(limpiarCfg); return; }
+        if (obj !== null && typeof obj === 'object'){
+          Object.keys(obj).forEach(function(k){
+            if (typeof obj[k] === 'string') obj[k] = limpiarHTML(obj[k]);
+            else limpiarCfg(obj[k]);
+          });
+        }
+      }
+      function aplicarConfig(nueva, mensaje){
+        limpiarCfg(nueva);
+        CFG = nueva;
+        buildDerived();
+        renderSimData();
+        renderEditor(CFG);
+        updateDiffUI();
+        resetSimulacion();
+        editorMsg(mensaje, true);
+      }
+      function sanitizar(importado, fabrica){
+        if (Array.isArray(fabrica)){
+          if (!Array.isArray(importado)) return clone(fabrica);
+          var plantilla = fabrica.length ? fabrica[0] : null;
+          return importado.map(function(item){ return sanitizar(item, plantilla); });
+        }
+        if (fabrica !== null && typeof fabrica === 'object'){
+          if (!importado || typeof importado !== 'object' || Array.isArray(importado)) return clone(fabrica);
+          var out = {};
+          Object.keys(fabrica).forEach(function(k){
+            out[k] = (k in importado) ? sanitizar(importado[k], fabrica[k]) : clone(fabrica[k]);
+          });
+          return out;
+        }
+        if (typeof importado === typeof fabrica) return importado;
+        return fabrica;
+      }
+
+      document.getElementById('btnToggleEditor').addEventListener('click', function(){
+        var wrap = document.getElementById('editorWrap');
+        var abrir = wrap.hidden;
+        wrap.hidden = !abrir;
+        this.textContent = abrir ? 'Cerrar editor' : '✏️ Editar flujo';
+        if (abrir && !editorRendered) renderEditor(CFG);
+      });
+      document.getElementById('btnApply').addEventListener('click', function(){
+        aplicarConfig(collectEditor(), 'Cambios aplicados. El chat se reinició: escribe «hola» para probar la nueva versión del flujo.');
+      });
+      editorForm.addEventListener('click', function(e){
+        var add = e.target.getAttribute && e.target.getAttribute('data-add');
+        var rem = e.target.getAttribute && e.target.getAttribute('data-remove');
+        if (!add && !rem) return;
+        var draft = collectEditor();
+        limpiarCfg(draft);
+        if (add){
+          var def = LIST_DEFS[add];
+          var nuevo = {};
+          def.campos.forEach(function(cf){ nuevo[cf.k] = cf.tipo === 'select' ? cf.opciones[0].v : ''; });
+          getPath(draft, add).push(nuevo);
+        } else {
+          getPath(draft, rem).splice(+e.target.getAttribute('data-idx'), 1);
+        }
+        CFG = draft;
+        renderEditor(CFG);
+      });
+      document.getElementById('btnExport').addEventListener('click', function(){
+        var json = JSON.stringify(CFG, null, 2);
+        var blob = new Blob([json], { type: 'application/json' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'flujo-cepaval.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(a.href); }, 3000);
+        lastExportedJSON = JSON.stringify(CFG);
+        updateDiffUI();
+        editorMsg('Configuración exportada como flujo-cepaval.json. Guárdalo para conservar tus mejoras.', true);
+      });
+      document.getElementById('btnCopyJson').addEventListener('click', function(){
+        var json = JSON.stringify(CFG, null, 2);
+        function listo(){
+          lastExportedJSON = JSON.stringify(CFG);
+          updateDiffUI();
+          editorMsg('JSON copiado al portapapeles. Pégalo en un archivo flujo-cepaval.json para conservarlo.', true);
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(json).then(listo, function(){ copiarFallback(json, listo); });
+        } else {
+          copiarFallback(json, listo);
+        }
+      });
+      function copiarFallback(texto, listo){
+        var ta = document.createElement('textarea');
+        ta.value = texto;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (e) { /* sin portapapeles disponible */ }
+        ta.remove();
+        listo();
+      }
+      var resetArmado = false, resetTimer = null;
+      document.getElementById('btnResetFactory').addEventListener('click', function(){
+        var btn = this;
+        if (!resetArmado){
+          resetArmado = true;
+          btn.textContent = '¿Seguro? Pulsa de nuevo para restablecer';
+          btn.classList.add('armed');
+          resetTimer = setTimeout(function(){
+            resetArmado = false;
+            btn.textContent = 'Restablecer de fábrica';
+            btn.classList.remove('armed');
+          }, 5000);
+          return;
+        }
+        clearTimeout(resetTimer);
+        resetArmado = false;
+        btn.textContent = 'Restablecer de fábrica';
+        btn.classList.remove('armed');
+        lastExportedJSON = null;
+        aplicarConfig(clone(FABRICA), 'Se restableció la configuración original de fábrica del PDF. El chat se reinició.');
+      });
+      document.getElementById('importFile').addEventListener('change', function(){
+        var file = this.files && this.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(){
+          document.getElementById('importText').value = String(reader.result || '');
+          importMsg('Archivo cargado. Pulsa «Importar y aplicar» para usarlo.', true);
+        };
+        reader.onerror = function(){ importMsg('No se pudo leer el archivo. Pega el JSON en el cuadro de texto.', false); };
+        reader.readAsText(file);
+      });
+      document.getElementById('btnImport').addEventListener('click', function(){
+        var texto = document.getElementById('importText').value.trim();
+        if (!texto){ importMsg('Pega primero el JSON o sube un archivo flujo-cepaval.json.', false); return; }
+        var datos;
+        try { datos = JSON.parse(texto); }
+        catch (e){ importMsg('Ese JSON no es válido (' + e.message + '). No se cambió nada: el simulador sigue con la configuración anterior.', false); return; }
+        if (!datos || typeof datos !== 'object' || Array.isArray(datos)){
+          importMsg('El JSON debe ser el objeto de configuración exportado desde este editor. No se cambió nada.', false);
+          return;
+        }
+        aplicarConfig(sanitizar(datos, FABRICA), '');
+        importMsg('Configuración importada y aplicada. El chat se reinició para probarla.', true);
+        editorMsg('Configuración importada desde JSON y aplicada al simulador.', true);
+      });
+
+      /* ================= Arranque ================= */
+      buildDerived();
+      renderSimData();
+      updateDiffUI();
       resetSimulacion();
     </script>
   </body>
