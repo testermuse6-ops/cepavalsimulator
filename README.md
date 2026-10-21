@@ -2,6 +2,12 @@
 
 Chat en vivo que replica el flujo ramificado del chatbot de CEPAVAL, para simular y revisar su actividad antes de usarlo con pacientes reales.
 
+## Demo en vivo
+
+**https://cepavalsimulator.vercel.app** — despliegue público en Vercel, listo para abrir y compartir.
+
+Este repositorio es privado: el código fuente solo es visible para el dueño de la cuenta; la demo desplegada sí es pública.
+
 ## Cómo usarlo
 
 Abre `index.html` en cualquier navegador (no necesita servidor ni instalación). Escribe **«hola»** para ver el menú principal:
